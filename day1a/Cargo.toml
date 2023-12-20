@@ -1,0 +1,20 @@
+[package]
+name = "day1a"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "day1a"
+path = "src/lib.rs"
+
+[[bin]]
+name = "solve_day1a"
+path = "src/main.rs"
+
+[dependencies]
+shared = { path = "../shared" }
+
+tokio = { version = "1.34.0", features = ["fs", "rt", "rt-multi-thread", "macros", "io-util"] }
+tokio-stream = { version = "0.1.14", features = ["io-util", "fs"] }
+log = "0.4.20"
+lazy_static = "1.4.0"
