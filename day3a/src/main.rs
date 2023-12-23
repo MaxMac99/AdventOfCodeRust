@@ -5,13 +5,13 @@ use regex::{Match, Regex};
 use tokio::fs::File;
 use tokio::io::BufReader;
 use tokio_stream::wrappers::LinesStream;
-use day3a::general_solution;
 
-use shared::execute_solution;
+use day3a::general_solution;
+use shared::execute_solution_stream;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    execute_solution("day3a/input.txt", solution).await
+    execute_solution_stream("day3a/input.txt", solution).await
 }
 
 async fn solution(lines: LinesStream<BufReader<File>>) -> Result<i64, Box<dyn Error>> {

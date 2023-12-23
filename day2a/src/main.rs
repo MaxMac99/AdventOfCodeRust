@@ -6,11 +6,11 @@ use tokio_stream::StreamExt;
 use tokio_stream::wrappers::LinesStream;
 
 use day2a::{parse_line, Set};
-use shared::execute_solution;
+use shared::execute_solution_stream;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    execute_solution("day2a/input.txt", solution).await
+    execute_solution_stream("day2a/input.txt", solution).await
 }
 
 async fn solution(lines: LinesStream<BufReader<File>>) -> Result<i64, Box<dyn Error>> {

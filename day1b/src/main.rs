@@ -7,7 +7,7 @@ use tokio::io::BufReader;
 use tokio_stream::wrappers::LinesStream;
 
 use day1a::general_solution;
-use shared::execute_solution;
+use shared::execute_solution_stream;
 
 lazy_static! {
     static ref WORDS: HashMap<&'static str, i64> = vec![
@@ -35,7 +35,7 @@ lazy_static! {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
-    execute_solution("day1b/input.txt", solution).await
+    execute_solution_stream("day1b/input.txt", solution).await
 }
 
 async fn solution(lines: LinesStream<BufReader<File>>) -> Result<i64, Box<dyn Error>> {
