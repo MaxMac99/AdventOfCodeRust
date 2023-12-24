@@ -13,7 +13,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     execute_solution_stream("day2a/input.txt", solution).await
 }
 
-async fn solution(lines: LinesStream<BufReader<File>>) -> Result<i64, Box<dyn Error>> {
+async fn solution(lines: LinesStream<BufReader<File>>) -> Result<u64, Box<dyn Error>> {
     Ok(lines
         .map(|line| line
             .unwrap_or_else(|err| panic!("Could not find line: {}", err)))
@@ -21,7 +21,7 @@ async fn solution(lines: LinesStream<BufReader<File>>) -> Result<i64, Box<dyn Er
         .fold(0, |acc, x| acc + x).await)
 }
 
-fn calc_line(line: &String) -> i64 {
+fn calc_line(line: &String) -> u64 {
     let game = parse_line(line);
 
     let min_set = Set {

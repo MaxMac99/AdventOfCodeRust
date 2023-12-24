@@ -13,11 +13,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
     execute_solution_stream("day3a/input.txt", solution).await
 }
 
-async fn solution(lines: LinesStream<BufReader<File>>) -> Result<i64, Box<dyn Error>> {
+async fn solution(lines: LinesStream<BufReader<File>>) -> Result<u64, Box<dyn Error>> {
     general_solution(lines, handle_line).await
 }
 
-fn handle_line(line: &String, previous: &Option<String>, next: &Option<String>) -> i64 {
+fn handle_line(line: &String, previous: &Option<String>, next: &Option<String>) -> u64 {
     let re = Regex::new(r"\*").unwrap();
     re.captures_iter(line)
         .filter_map(|cap| cap.get(0))
@@ -25,13 +25,13 @@ fn handle_line(line: &String, previous: &Option<String>, next: &Option<String>) 
         .sum()
 }
 
-fn find_surroundings(found: &Match, line: &String, previous: &Option<String>, next: &Option<String>) -> Option<i64> {
+fn find_surroundings(found: &Match, line: &String, previous: &Option<String>, next: &Option<String>) -> Option<u64> {
     let pos = found.start();
     let re = Regex::new(r"\d+").unwrap();
-    let mut matches: Vec<i64> = re.captures_iter(line)
+    let mut matches: Vec<u64> = re.captures_iter(line)
         .filter_map(|cap| cap.get(0))
         .filter(|val| val.end() == pos || val.start() == pos + 1)
-        .map(|val| val.as_str().parse::<i64>().expect("Could not parse"))
+        .map(|val| val.as_str().parse::<u64>().expect("Could not parse"))
         .collect();
     if matches.len() == 2 {
         return Some(matches[0] * matches[1]);
@@ -45,13 +45,13 @@ fn find_surroundings(found: &Match, line: &String, previous: &Option<String>, ne
     None
 }
 
-fn find_and_append_to_matches(previous: &Option<String>, pos: &usize, re: &Regex, matches: &mut Vec<i64>) {
+fn find_and_append_to_matches(previous: &Option<String>, pos: &usize, re: &Regex, matches: &mut Vec<u64>) {
     if let Some(prev) = previous {
         matches.append(&mut re.captures_iter(prev)
             .filter_map(|cap| cap.get(0))
             .filter(|val| val.start() <= pos + 1 && pos <= &val.end())
-            .map(|val| val.as_str().parse::<i64>().expect("Could not parse"))
-            .collect::<Vec<i64>>()
+            .map(|val| val.as_str().parse::<u64>().expect("Could not parse"))
+            .collect::<Vec<u64>>()
             .clone())
     }
 }

@@ -1,13 +1,13 @@
 use regex::Regex;
 
 pub struct Set {
-    pub red: i64,
-    pub green: i64,
-    pub blue: i64,
+    pub red: u64,
+    pub green: u64,
+    pub blue: u64,
 }
 
 pub struct Game {
-    pub id: i64,
+    pub id: u64,
     pub sets: Vec<Set>,
 }
 

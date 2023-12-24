@@ -9,7 +9,7 @@ use tokio_stream::wrappers::LinesStream;
 pub async fn execute_solution_stream<F, Fut>(filename: &'static str, solution: F) -> Result<(), Box<dyn Error>>
     where
         F: FnOnce(LinesStream<BufReader<File>>) -> Fut,
-        Fut: Future<Output=Result<i64, Box<dyn Error>>>
+        Fut: Future<Output=Result<u64, Box<dyn Error>>>
 {
     let lines = read_lines(filename).await?;
 

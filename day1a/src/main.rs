@@ -10,7 +10,7 @@ use day1a::general_solution;
 use shared::execute_solution_stream;
 
 lazy_static! {
-    static ref WORDS: HashMap<&'static str, i64> = vec![
+    static ref WORDS: HashMap<&'static str, u64> = vec![
         ("0", 0),
         ("1", 1),
         ("2", 2),
@@ -29,7 +29,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     execute_solution_stream("day1a/input.txt", solution).await
 }
 
-async fn solution(lines: LinesStream<BufReader<File>>) -> Result<i64, Box<dyn Error>> {
+async fn solution(lines: LinesStream<BufReader<File>>) -> Result<u64, Box<dyn Error>> {
     Ok(general_solution(lines, &WORDS).await)
 }
 
