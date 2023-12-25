@@ -1,7 +1,6 @@
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::error::Error;
-use std::rc::Rc;
+use std::sync::Arc;
 
 use nom::branch::alt;
 use nom::bytes::complete::tag;
@@ -11,10 +10,11 @@ use nom::error::context;
 use nom::IResult;
 use nom::multi::separated_list0;
 use nom::sequence::{terminated, tuple};
+use tokio::sync::Mutex;
 
 use crate::types::{Broadcaster, Conjunction, FlipFlop, Module};
 
-pub fn parse_machine(content: String) -> Result<HashMap<String, Rc<RefCell<dyn Module>>>, Box<dyn Error>> {
+pub fn parse_machine(content: String) -> Result<HashMap<String, Arc<Mutex<dyn Module>>>, Box<dyn Error>> {
     let parsed: HashMap<&str, ParsedItem> = content.split("\n")
         .map(|line| parse_item(line).expect("Could not parse line"))
         .collect();
@@ -22,18 +22,18 @@ pub fn parse_machine(content: String) -> Result<HashMap<String, Rc<RefCell<dyn M
     Ok(create_modules(&parsed))
 }
 
-fn create_modules(parsed: &HashMap<&str, ParsedItem>) -> HashMap<String, Rc<RefCell<dyn Module>>> {
-    let mut modules: HashMap<String, Rc<RefCell<dyn Module>>> = HashMap::new();
+fn create_modules(parsed: &HashMap<&str, ParsedItem>) -> HashMap<String, Arc<Mutex<dyn Module>>> {
+    let mut modules: HashMap<String, Arc<Mutex<dyn Module>>> = HashMap::new();
     add_modules("broadcaster", 0, &parsed, &mut modules);
     modules
 }
 
-fn add_modules(name: &str, id: usize, parsed: &HashMap<&str, ParsedItem>, target: &mut HashMap<String, Rc<RefCell<dyn Module>>>) {
+fn add_modules(name: &str, id: u64, parsed: &HashMap<&str, ParsedItem>, target: &mut HashMap<String, Arc<Mutex<dyn Module>>>) {
     let item = parsed.get(name).expect(&format!("Could not find item with name {}", name));
-    let module: Rc<RefCell<dyn Module>> = match item.parsed_type {
-        ParsedType::Broadcaster => Rc::new(RefCell::new(Broadcaster::new())),
-        ParsedType::FlipFlop => Rc::new(RefCell::new(FlipFlop::from(id))),
-        ParsedType::Conjunction => Rc::new(RefCell::new(Conjunction::from(id))),
+    let module: Arc<Mutex<dyn Module>> = match item.parsed_type {
+        ParsedType::Broadcaster => Arc::new(Mutex::new(Broadcaster::new())),
+        ParsedType::FlipFlop => Arc::new(Mutex::new(FlipFlop::from(id))),
+        ParsedType::Conjunction => Arc::new(Mutex::new(Conjunction::from(id))),
     };
     target.insert(String::from(name), module.clone());
 
@@ -43,7 +43,7 @@ fn add_modules(name: &str, id: usize, parsed: &HashMap<&str, ParsedItem>, target
             add_modules(destination, id + 1, parsed, target);
             destination_module = target.get(&String::from(*destination));
         }
-        module.borrow_mut().add_destination(destination_module.unwrap().clone());
+        module.blocking_lock().add_destination(destination_module.unwrap().clone());
     }
 }
 
