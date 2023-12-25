@@ -1,6 +1,7 @@
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::error::Error;
-use std::sync::Arc;
+use std::rc::Rc;
 
 use nom::branch::alt;
 use nom::bytes::complete::tag;
@@ -10,40 +11,37 @@ use nom::error::context;
 use nom::IResult;
 use nom::multi::separated_list0;
 use nom::sequence::{terminated, tuple};
-use tokio::sync::Mutex;
 
 use crate::types::{Broadcaster, Conjunction, FlipFlop, Module};
 
-pub fn parse_machine(content: String) -> Result<HashMap<String, Arc<Mutex<dyn Module>>>, Box<dyn Error>> {
-    let parsed: HashMap<&str, ParsedItem> = content.split("\n")
+pub fn parse_machine(content: &str) -> Result<HashMap<String, Rc<RefCell<dyn Module>>>, Box<dyn Error>> {
+    let modules: HashMap<String, Rc<RefCell<dyn Module>>> = content.split("\n")
         .map(|line| parse_item(line).expect("Could not parse line"))
+        .map(|(name, item)| (String::from(name), create_module(item)))
         .collect();
 
-    Ok(create_modules(&parsed))
+    register_source("broadcaster", "", &modules);
+
+    Ok(modules)
 }
 
-fn create_modules(parsed: &HashMap<&str, ParsedItem>) -> HashMap<String, Arc<Mutex<dyn Module>>> {
-    let mut modules: HashMap<String, Arc<Mutex<dyn Module>>> = HashMap::new();
-    add_modules("broadcaster", 0, &parsed, &mut modules);
-    modules
-}
-
-fn add_modules(name: &str, id: u64, parsed: &HashMap<&str, ParsedItem>, target: &mut HashMap<String, Arc<Mutex<dyn Module>>>) {
-    let item = parsed.get(name).expect(&format!("Could not find item with name {}", name));
-    let module: Arc<Mutex<dyn Module>> = match item.parsed_type {
-        ParsedType::Broadcaster => Arc::new(Mutex::new(Broadcaster::new())),
-        ParsedType::FlipFlop => Arc::new(Mutex::new(FlipFlop::from(id))),
-        ParsedType::Conjunction => Arc::new(Mutex::new(Conjunction::from(id))),
-    };
-    target.insert(String::from(name), module.clone());
-
-    for destination in &item.destinations {
-        let mut destination_module = target.get(&String::from(*destination));
-        if destination_module.is_none() {
-            add_modules(destination, id + 1, parsed, target);
-            destination_module = target.get(&String::from(*destination));
+fn register_source(name: &str, source: &str, modules: &HashMap<String, Rc<RefCell<dyn Module>>>) {
+    if let Some(module) = modules.get(name) {
+        if let Ok(mut module_ref) = module.try_borrow_mut() {
+            module_ref.register_input(String::from(source));
+            drop(module_ref);
+            for dest in module.borrow().get_destinations().clone() {
+                register_source(&dest, name, modules);
+            }
         }
-        module.blocking_lock().add_destination(destination_module.unwrap().clone());
+    }
+}
+
+fn create_module(item: ParsedItem) -> Rc<RefCell<dyn Module>> {
+    match item.parsed_type {
+        ParsedType::Broadcaster => Rc::new(RefCell::new(Broadcaster::from(item.destinations))),
+        ParsedType::FlipFlop => Rc::new(RefCell::new(FlipFlop::from(item.destinations))),
+        ParsedType::Conjunction => Rc::new(RefCell::new(Conjunction::from(item.destinations))),
     }
 }
 
